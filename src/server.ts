@@ -60,10 +60,11 @@ export function createServer(onVerify: (user: VerifiedUser) => Promise<void>) {
     const { code, state, error, error_description: errorDescription } = req.query;
 
     if (error) {
-      return res.status(400).send(renderResult(false, `Microsoft returned an error: ${error} - ${errorDescription || ''}`));
+      console.error(`MS API returned error: ${errorDescription}`)
+      return res.status(400).send(renderResult(false, `Microsoft API returned an error. Please try again or contact an admin.`));
     }
     if (!code || !state) {
-      return res.status(400).send(renderResult(false, 'Missing code or state parameter.'));
+      return res.status(400).send(renderResult(false, 'Missing required parameters.'));
     }
 
     const pending = consumePendingState(String(state));
@@ -96,7 +97,7 @@ export function createServer(onVerify: (user: VerifiedUser) => Promise<void>) {
       }
 
       upsertVerifiedUser(user);
-      onVerify(user).catch((err) => console.error('onVerify handler failed:', err));
+      await onVerify(user);
 
       return res.send(renderResult(true, 'You can close this tab and return to Discord.'));
     } catch (err) {
